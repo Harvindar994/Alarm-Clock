@@ -17,10 +17,16 @@ class Frame:
         self.elements = []
 
     def addComponents(self, element):
+        # Here checking that all the default attributes is available in the give object or not.
         attributes = element.__dir__()
+        for attribute in attributes:
+            if attribute not in self.defaultAttributes:
+                print(f"'{attribute}' is not available in the give object")
+                return
 
-        if 'show' in attributes and 'x' in attributes and 'y' in attributes:
-
+        # here adding the element in the list.
+        self.elements.append(element)
+        return True
 
     def show(self):
         pass
