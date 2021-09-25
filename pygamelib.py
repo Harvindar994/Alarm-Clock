@@ -1,17 +1,19 @@
 import pygame
 
-
 class Frame:
-    def __init__(self, name, area, backgroundColor=None, partition=None):
+    def __init__(self, surface, name, area, backgroundColor=None, partition=None, borderRadius=None):
         self.name = name
         self.x, self.y, self.width, self.height = area
+        self.areaUnit = self.height / 100
+        self.borderRadius = borderRadius
+        self.surface = surface
 
         """
         data structure of partition will be in percentage.
-        structure: {area in percentage: color, area in percentage: color}
+        structure: ((area in percentage), color), (area in percentage), color))
         note: partition will work to define diffrent area with diffrent color, and it will be in the vertical way.
         """
-        self.partition = partition
+        self.rePartition(partition)
         self.backgroundColor = backgroundColor
 
         """
@@ -40,15 +42,50 @@ class Frame:
         self.elements.append(element)
         return True
 
-    def rePartition(self):
-        pass
+    def rePartition(self, partitions):
+        if partitions is None:
+            self.partitions = None
+        else:
+            totalArea = 100
+            Current_y = self.y
+            self.partitions = []
+            for partition in partitions:
+                area, color = partition
+                if totalArea >= area:
+                    totalArea -= area
+                    height = (self.areaUnit*area)
+                    self.partitions.append(((self.x, Current_y, self.width, height), color))
+                    Current_y += height
+                else:
+                    print(f'There is not enough space create partition, Partition Info:{(area, color)}')
+                    break
+            self.totalPartitions = len(self.partitions)
+
 
     def show(self):
         if self.backgroundColor is not None:
-            if self.partition is None:
-                pass
+            if self.partitions is None:
+                if self.borderRadius is not None:
+                    pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height),
+                                     border_top_left_radius=self.borderRadius[0], border_top_right_radius=self.borderRadius[0],
+                                     border_bottom_right_radius=self.borderRadius[0], border_bottom_left_radius=self.borderRadius[0])
+                else:
+                    pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height))
             else:
-                pass
+                counter = 0
+                while counter < self.totalPartitions:
+                    area, color = self.partitions[counter]
+                    if self.borderRadius is not None:
+                        if counter == 0:
+                            pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height),
+                                             border_top_left_radius=self.borderRadius[0],
+                                             border_top_right_radius=self.borderRadius[0])
+                        elif counter == self.totalPartitions - 1:
+                            pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height),
+                                             border_bottom_right_radius=self.borderRadius[0],
+                                             border_bottom_left_radius=self.borderRadius[0])
+                        else:
+                            pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height))
 
 
     def showElement(self):
