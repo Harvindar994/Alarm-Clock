@@ -164,7 +164,6 @@ class VideoPlayer:
     def open(self):
         try:
             self.VideoReader = cv2.VideoCapture(self.video)
-            self.VideoReader.setExceptionMode(False)
         except:
             self.FileOpend = False
             return False
