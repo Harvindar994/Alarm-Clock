@@ -1,16 +1,28 @@
 import pygame
+import cv2
+import numpy
+
+
+# Common Functions
+def openCVFrametoPygameSurface(frame):
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    frame = numpy.rot90(frame)
+    frame = pygame.surfarray.make_surface(frame)
+    return frame
+
 
 class Frame:
-    def __init__(self, surface, name, area, backgroundColor=None, partition=None, borderRadius=None):
+    def __init__(self, surface, name, area, backgroundColor=None, partition=None, borderRadius=None, outline=0):
         self.name = name
         self.x, self.y, self.width, self.height = area
         self.areaUnit = self.height / 100
         self.borderRadius = borderRadius
         self.surface = surface
+        self.outline = outline
 
         """
         data structure of partition will be in percentage.
-        structure: ((area in percentage), color), (area in percentage), color))
+        structure: {'area': area_in_percentage, 'color': RGB_color, 'outline': Width_of_outline_in_pixel}
         note: partition will work to define diffrent area with diffrent color, and it will be in the vertical way.
         """
         self.rePartition(partition)
@@ -50,43 +62,58 @@ class Frame:
             Current_y = self.y
             self.partitions = []
             for partition in partitions:
-                area, color = partition
+                area = partition['area']
                 if totalArea >= area:
                     totalArea -= area
                     height = (self.areaUnit*area)
-                    self.partitions.append(((self.x, Current_y, self.width, height), color))
+                    partition['area'] = (self.x, Current_y, self.width, height)
+                    self.partitions.append(partition)
                     Current_y += height
                 else:
-                    print(f'There is not enough space create partition, Partition Info:{(area, color)}')
+                    print(f'There is not enough space create partition, Partition Info:{partition}')
                     break
             self.totalPartitions = len(self.partitions)
 
 
     def show(self):
-        if self.backgroundColor is not None:
-            if self.partitions is None:
-                if self.borderRadius is not None:
-                    pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height),
-                                     border_top_left_radius=self.borderRadius[0], border_top_right_radius=self.borderRadius[0],
-                                     border_bottom_right_radius=self.borderRadius[0], border_bottom_left_radius=self.borderRadius[0])
-                else:
-                    pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height))
+        if self.backgroundColor is not None and self.partitions is not None:
+            if self.borderRadius is not None:
+                pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height), width=self.outline,
+                                 border_top_left_radius=self.borderRadius[0], border_top_right_radius=self.borderRadius[1],
+                                 border_bottom_right_radius=self.borderRadius[2], border_bottom_left_radius=self.borderRadius[3])
             else:
-                counter = 0
-                while counter < self.totalPartitions:
-                    area, color = self.partitions[counter]
-                    if self.borderRadius is not None:
-                        if counter == 0:
-                            pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height),
-                                             border_top_left_radius=self.borderRadius[0],
-                                             border_top_right_radius=self.borderRadius[0])
-                        elif counter == self.totalPartitions - 1:
-                            pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height),
-                                             border_bottom_right_radius=self.borderRadius[0],
-                                             border_bottom_left_radius=self.borderRadius[0])
-                        else:
-                            pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height))
-
+                pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height),
+                                 width=self.outline)
+        elif self.partitions is not None:
+            counter = 0
+            while counter < self.totalPartitions:
+                partition = self.partitions[counter]
+                area = partition['area']
+                if 'color' in partition:
+                    color = partition["color"]
+                else:
+                    if self.backgroundColor is not None:
+                        color = self.backgroundColor
+                    else:
+                        color = (60, 63, 65)
+                if 'outline' in partition:
+                    outline = partition['outline']
+                else:
+                    outline = self.outline
+                if self.borderRadius is not None:
+                    if counter == 0:
+                        pygame.draw.rect(self.surface, color, area, width=outline,
+                                         border_top_left_radius=self.borderRadius[0],
+                                         border_top_right_radius=self.borderRadius[1])
+                    elif counter == self.totalPartitions - 1:
+                        pygame.draw.rect(self.surface, color, area, width=outline,
+                                         border_bottom_right_radius=self.borderRadius[2],
+                                         border_bottom_left_radius=self.borderRadius[3])
+                    else:
+                        pygame.draw.rect(self.surface, color, area, width=outline)
+                else:
+                    pygame.draw.rect(self.surface, color, area, width=self.outline)
+                counter += 1
 
     def showElement(self):
         for element in self.elements:
