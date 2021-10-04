@@ -166,6 +166,7 @@ class VideoPlayer:
         self.mirrorEffect = mirror_effect
         self.height = None
         self.width = None
+        self.frameCrop = None
 
     def maintainAspectRatio(self):
         video = cv2.VideoCapture(self.video)
@@ -177,6 +178,16 @@ class VideoPlayer:
         width = frame.get_width()
         self.height = int((self.width * (height/width)))
         video.release()
+
+    def activeFrameCropper(self, area):
+        """
+        :param area: (x, y, width, height)
+        :return: None
+        """
+        self.frameCrop = area
+
+    def deactivateFrameCropper(self):
+        self.frameCrop = None
 
     def activeMirrorEffect(self):
         self.mirrorEffect = True
@@ -217,6 +228,9 @@ class VideoPlayer:
 
                     if self.FrameResizer:
                         frame = cv2.resize(frame, (self.width, self.height), fx=0, fy=0, interpolation=cv2.INTER_CUBIC)
+                    if self.frameCrop is not None:
+                        x, y, width, height = self.frameCrop
+                        frame = frame[y:y+height, x:x+width]  # frame[y:y+height, x:x+width]
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     frame = numpy.rot90(frame)
                     frame = pygame.surfarray.make_surface(frame)

@@ -13,24 +13,24 @@ def closeApplication():
 def MianMenu():
     run = True
     # just Testing.
-    frame_1 = Frame(window, 'frame', (600, 100, 300, 400), borderRadius=(10, 10, 10, 10),
+    MainFrame = Frame(window, 'frame', (0, 0, 1280, 720),
                     partition=[{'area': 90, 'color': (0, 0, 255), 'outline': 0},
-                               {'area': 10, 'color': (150, 175, 155), 'outline': 0}])
-    video = VideoPlayer(window, 3, 10, 'video.mov', True)
-    video.activeFrameResizer(294, aspectRatio=True)
+                               {'area': 10, 'color': (56, 67, 73), 'outline': 0}])
+    video = VideoPlayer(window, 0, 0, 'video.mov', True)
+    video.activeFrameCropper((0, 0, 1280, 600))
+    video.activeFrameResizer(1280, aspectRatio=True)
 
-    frame_1.addComponents(video)
+    MainFrame.addComponents(video)
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 closeApplication()
 
+
         window.fill((255, 255, 255))
 
-        # video.show()
-        frame_1.show()
+        MainFrame.show()
         pygame.display.update()
-        # pygame.time.Clock().tick(0)
 
 MianMenu()
 
