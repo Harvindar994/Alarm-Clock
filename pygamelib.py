@@ -7,6 +7,12 @@ import time
 import webbrowser
 from datetime import datetime
 
+
+# constants
+COLOR_WHITE = (255, 255, 255)
+COLOR_BLACK = (0, 0, 0)
+
+
 # Common Functions
 def openCVFrameToPygameSurface(frame):
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -362,8 +368,9 @@ class ProgressBar:
 
 
 class DigitalClock:
-    def __init__(self, position, font_size, dateFontSize = 20, show_date=True, font_color=WHITE_COLOR, font_file = Font_Quicksand_Regular, screen=GameWindow):
+    def __init__(self, surface, position, font_size, dateFontSize = 20, show_date=True, font_color=WHITE_COLOR, font_file = Font_Quicksand_Regular, screen=GameWindow):
         self.x, self.y = position
+        self.surface = surface
         self.screen = screen
         self.dateFontSize = dateFontSize
         self.fontColor = font_color
@@ -381,9 +388,9 @@ class DigitalClock:
         date = now.strftime("%B %d, %Y")
         # for time
         time = now.strftime("%H : %M : %S")
-        self.time = out_text_file(GameWindow, time, self.fontSize, 0, 0, self.fontColor, self.font_file, True).convert_alpha()
+        self.time = out_text_file(self.surface, time, self.fontSize, 0, 0, self.fontColor, self.font_file, True).convert_alpha()
         if self.showDate:
-            self.date = out_text_file(GameWindow, date, self.dateFontSize, 0, 0, self.fontColor, self.font_file, True).convert_alpha()
+            self.date = out_text_file(self.surface, date, self.dateFontSize, 0, 0, self.fontColor, self.font_file, True).convert_alpha()
             # self.date_x = (self.x + self.time.get_width()) - self.date.get_width()
             if self.date_y == None:
                 self.date_y = self.y + self.time.get_height()-5
