@@ -1,14 +1,41 @@
 import pygame
 import cv2
 import numpy
+import os
 
 
 # Common Functions
-def openCVFrametoPygameSurface(frame):
+def openCVFrameToPygameSurface(frame):
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     frame = numpy.rot90(frame)
     frame = pygame.surfarray.make_surface(frame)
     return frame
+
+
+def extractFramesFromVideo(video, output_dir="", frameCount=None, mirror_effect=False, counterStartPoint=0,
+                           skipFrame=0):
+    video = cv2.VideoCapture(video)
+    counter = counterStartPoint
+    frameCounter = 0
+    converting = True
+    while converting:
+        flag, frame = video.read()
+        if flag:
+            if skipFrame > 0:
+                skipFrame -= 1
+                continue
+            if not mirror_effect:
+                frame = cv2.flip(frame, 1)
+            cv2.imwrite(os.path.join(output_dir, str(counter)+".jpg"), frame)
+            counter += 1
+            if frameCount is not None:
+                frameCounter += 1
+                if not frameCounter < frameCount:
+                    converting = False
+        else:
+            break
+
+    video.release()
 
 
 class Frame:
@@ -23,8 +50,10 @@ class Frame:
         """
         data structure of partition will be in percentage.
         structure: {'area': area_in_percentage, 'color': RGB_color, 'outline': Width_of_outline_in_pixel}
-        note: partition will work to define diffrent area with diffrent color, and it will be in the vertical way.
+        note: partition will work to define different area with different color, and it will be in the vertical way.
         """
+        self.partitions = None
+        self.totalPartitions = 0
         self.rePartition(partition)
         self.backgroundColor = backgroundColor
 
@@ -41,8 +70,8 @@ class Frame:
     def addComponents(self, element):
         # Here checking that all the default attributes is available in the give object or not.
         attributes = element.__dir__()
-        for attribute in attributes:
-            if attribute not in self.defaultAttributes:
+        for attribute in self.defaultAttributes:
+            if attribute not in attributes:
                 print(f"'{attribute}' is not available in the give object")
                 return
 
@@ -74,13 +103,15 @@ class Frame:
                     break
             self.totalPartitions = len(self.partitions)
 
-
     def show(self):
         if self.backgroundColor is not None and self.partitions is not None:
             if self.borderRadius is not None:
-                pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height), width=self.outline,
-                                 border_top_left_radius=self.borderRadius[0], border_top_right_radius=self.borderRadius[1],
-                                 border_bottom_right_radius=self.borderRadius[2], border_bottom_left_radius=self.borderRadius[3])
+                pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height),
+                                 width=self.outline,
+                                 border_top_left_radius=self.borderRadius[0],
+                                 border_top_right_radius=self.borderRadius[1],
+                                 border_bottom_right_radius=self.borderRadius[2],
+                                 border_bottom_left_radius=self.borderRadius[3])
             else:
                 pygame.draw.rect(self.surface, self.backgroundColor, (self.x, self.y, self.width, self.height),
                                  width=self.outline)
@@ -114,11 +145,11 @@ class Frame:
                 else:
                     pygame.draw.rect(self.surface, color, area, width=self.outline)
                 counter += 1
+            self.showElements()
 
-    def showElement(self):
+    def showElements(self):
         for element in self.elements:
             element.show()
-            
             
 
 class VideoPlayer:
@@ -133,6 +164,8 @@ class VideoPlayer:
         self.open()
         self.FrameResizer = False
         self.mirrorEffect = mirror_effect
+        self.height = None
+        self.width = None
 
     def maintainAspectRatio(self):
         video = cv2.VideoCapture(self.video)
@@ -145,10 +178,10 @@ class VideoPlayer:
         self.height = int((self.width * (height/width)))
         video.release()
 
-    def activeMirrorEffact(self):
+    def activeMirrorEffect(self):
         self.mirrorEffect = True
 
-    def deactiveMirrorEffact(self):
+    def deactivateMirrorEffect(self):
         self.mirrorEffect = False
 
     def activeFrameResizer(self, width=600, height=600, aspectRatio=False):
@@ -158,39 +191,38 @@ class VideoPlayer:
         if aspectRatio:
             self.maintainAspectRatio()
 
-    def deactiveFrameResizer(self):
+    def deactivateFrameResizer(self):
         self.FrameResizer = False
 
     def open(self):
         try:
             self.VideoReader = cv2.VideoCapture(self.video)
-            self.VideoReader.setExceptionMode(False)
         except:
-            self.FileOpend = False
+            self.FileOpened = False
             return False
-        self.FileOpend = True
+        self.FileOpened = True
 
     def close(self):
         self.VideoReader.release()
-        self.FileOpend = False
+        self.FileOpened = False
 
     def show(self):
-        if self.FileOpend:
-            flag, frame = self.VideoReader.read()
-            if flag:
-                if not self.mirrorEffect:
-                    frame = cv2.flip(frame, 1)
+        if self.FileOpened:
+            repeat = True
+            while repeat:
+                flag, frame = self.VideoReader.read()
+                if flag:
+                    if not self.mirrorEffect:
+                        frame = cv2.flip(frame, 1)
 
-                if self.FrameResizer:
-                    frame = cv2.resize(frame, (self.width, self.height), fx=0, fy=0, interpolation=cv2.INTER_CUBIC)
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                frame = numpy.rot90(frame)
-                frame = pygame.surfarray.make_surface(frame)
-                self.surface.blit(frame, (self.x, self.y))
-            else:
-                self.close()
-                if self.playInLoop:
-                    self.open()
-
-
-
+                    if self.FrameResizer:
+                        frame = cv2.resize(frame, (self.width, self.height), fx=0, fy=0, interpolation=cv2.INTER_CUBIC)
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    frame = numpy.rot90(frame)
+                    frame = pygame.surfarray.make_surface(frame)
+                    self.surface.blit(frame, (self.x, self.y))
+                    repeat = False
+                else:
+                    self.close()
+                    if self.playInLoop:
+                        self.open()
