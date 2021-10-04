@@ -17,7 +17,7 @@ def MianMenu():
                     partition=[{'area': 90, 'color': (0, 0, 255), 'outline': 0},
                                {'area': 10, 'color': (56, 67, 73), 'outline': 0}])
     video = VideoPlayer(window, 0, 0, 'video.mov', True)
-    video.activeFrameCropper((0, 0, 1280, 600))
+    video.activeFrameCropper((0, 0, 1280, 648))
     video.activeFrameResizer(1280, aspectRatio=True)
 
     MainFrame.addComponents(video)
@@ -25,10 +25,10 @@ def MianMenu():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 closeApplication()
-
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                print(event.pos)
 
         window.fill((255, 255, 255))
-
         MainFrame.show()
         pygame.display.update()
 
