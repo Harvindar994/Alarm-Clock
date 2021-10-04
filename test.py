@@ -1,11 +1,11 @@
 import cv2
 
 #  Loading Video.
-video = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+video = cv2.VideoCapture('video.mov', cv2.CAP_DSHOW)
 
 while True:
-    read_or_not , frame = video.read()
-
+    read_or_not, frame = video.read()
+    frame = frame.crop((1, 1, 98, 33))
     # converting into gray scale.
     # grayscaled_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
