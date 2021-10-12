@@ -1,22 +1,85 @@
-import cv2
+import pygame
+import pygamelib
 
-#  Loading Video.
-video = cv2.VideoCapture('video.mov', cv2.CAP_DSHOW)
+pygame.init()
+width = 600
+height = 300
+window = pygame.display.set_mode((width, height))
 
-while True:
-    read_or_not, frame = video.read()
-    frame = frame.crop((1, 1, 98, 33))
-    # converting into gray scale.
-    # grayscaled_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    # face_coord = trained_face_data.detectMultiScale(grayscaled_image)
-    # for coord in face_coord:
-    #     x, y, width, height = coord
-    #     cv2.rectangle(frame, (x, y), (x+width, y+height), (0, 255, 0), 1)
+class ScrollArea:
+    def __init__(self, surface, area, background_properties=None):
+        self.background_properties = background_properties
+        self.surface = surface
+        self.area = area
 
-    cv2.imshow("Video", frame)
-    key = cv2.waitKey(1)
-    if key == 113 or key==81:
-        break
+    @staticmethod
+    def get_surface(rect):
+        return pygame.Surface(pygame.Rect(rect).size, pygame.SRCALPHA)
 
-video.release()
+    def show(self):
+        pass
+
+
+class Layout:
+    def __init__(self, surface, x, y, margin=0, spacing=0, visibility_area=None, name="VLayout"):
+        self.name = name
+        self.visibility_area = visibility_area
+        self.margin = margin
+        self.spacing = spacing
+        self.x = x
+        self.y = y
+        self.height = 0
+        self.width = 0
+
+        # components
+        self.total_component = 0
+        self.component = []
+
+        """
+        this list is containing all the default attribute that should be available in Component.
+        """
+        self.defaultAttributes = ['show', 'x', 'y', 'height', 'width']
+
+        if self.name == "VLayout":
+            self.Layout = self.VLayout
+        elif self.name == "HLayout":
+            self.Layout = self.HLayout
+        else:
+            raise TypeError("Invalid Layout, it can only HLayout, VLayout")
+
+    def validate_component(self, element):
+        # Here checking that all the default attributes is available in the give object or not.
+        attributes = element.__dir__()
+        for attribute in self.defaultAttributes:
+            if attribute not in attributes:
+                print(f"'{attribute}' is not available in the give object")
+                return False
+        return True
+
+    def add_component(self, component, alignment='center'):
+        """
+        :type alignment: str
+        """
+        if self.validate_component(component):
+            self.component.append({'component': component, 'alignment': alignment})
+
+    def VLayout(self):
+        pass
+
+    def HLayout(self):
+        pass
+
+    def show(self):
+        pass
+
+
+run = True
+while run:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+
+    window.fill((145, 34, 110))
+    pygame.display.update()
+
