@@ -43,7 +43,9 @@ class Layout:
 
         if self.name == "VLayout":
             self.Layout = self.VLayout
+            self.height += self.spacing
         elif self.name == "HLayout":
+            self.width += self.spacing
             self.Layout = self.HLayout
         else:
             raise TypeError("Invalid Layout, it can only HLayout, VLayout")
