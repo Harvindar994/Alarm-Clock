@@ -10,26 +10,31 @@ window = pygame.display.set_mode((width, height))
 
 
 class ScrollArea:
-    def __init__(self, surface, x, y, background_properties=None, layout=None):
+    def __init__(self, surface, area, background_properties=None, layout=None):
         self.background_properties = background_properties
         self.surface = surface
-        self.x = x
-        self.y = y
+        self.x, self.y, self.width, self.height = area
 
         # Scroll Surface
-        self.ScrollAreaSurface = None
+        self.ScrollAreaSurface = self.create_surface((0, 0, self.width, self.height))
 
         # it will be containing layout
-        self.Layout = layout
+        if layout is not None:
+            self.set_layout(layout)
+        else:
+            self.Layout = layout
 
     @staticmethod
-    def get_surface(rect):
+    def create_surface(rect):
         return pygame.Surface(pygame.Rect(rect).size, pygame.SRCALPHA)
+
+    def get_surface(self):
+        return self.ScrollAreaSurface
 
     def validate_layout(self, layout):
         # Here checking that all the default attributes is available in the give object or not.
         attributes = layout.__dir__()
-        for attribute in ['width', 'name', 'height', 'x', 'y']:
+        for attribute in ['width', 'name', 'height', 'x', 'y', 'show']:
             if attribute not in attributes:
                 print(f"'{attribute}' is not available in the give object")
                 return False
@@ -38,15 +43,20 @@ class ScrollArea:
     def set_layout(self, layout):
         if self.validate_layout(layout):
             self.Layout = layout
+            self.Layout.set_surface(self.ScrollAreaSurface)
+            self.Layout.x = self.x
+            self.Layout.y = self.y
         else:
             raise TypeError('Invalid Layout')
 
     def show(self, event=None):
-        if event is None:
+        if event is not None:
             pass
 
         else:
-            pass
+            self.ScrollAreaSurface.fill((0, 0, 0, 0))
+            self.Layout.show()
+            self.surface.blit(self.ScrollAreaSurface, (self.x, self.y))
 
 
 class Layout:
@@ -74,13 +84,16 @@ class Layout:
         self.width += (self.margin_left + self.margin_right)
         self.height += (self.margin_top + self.margin_bottom)
 
-        if self.name is not "VLayout" and self.name is not "HLayout":
+        if self.name != "VLayout" and self.name != "HLayout":
             raise TypeError("Invalid Layout, it can only HLayout, VLayout")
 
         if self.name == 'VLayout':
             self.width += min_width
         else:
             self.height += min_width
+
+    def set_surface(self, surface):
+        self.surface = surface
 
     def validate_component(self, element):
         # Here checking that all the default attributes is available in the give object or not.
@@ -129,8 +142,8 @@ class Layout:
             component.y = y
             if self.visibility_area is not None:
                 v_y, height = self.visibility_area
-                pygame.draw.rect(self.surface, (255, 255, 255), (self.x, v_y, self.width, height), 1)
-                pygame.draw.rect(self.surface, (0, 0, 0), (self.x, self.y, self.width, self.height), 1)
+                # pygame.draw.rect(self.surface, (255, 255, 255), (self.x, v_y, self.width, height), 1)
+                # pygame.draw.rect(self.surface, (0, 0, 0), (self.x, self.y, self.width, self.height), 1)
                 if component.y >= v_y and component.y+component.height <= v_y + height:
                     component.show()
                 elif component.y > v_y + height:
@@ -156,8 +169,8 @@ class Layout:
             component.x = x
             if self.visibility_area is not None:
                 v_x, height = self.visibility_area
-                pygame.draw.rect(self.surface, (255, 255, 255), (v_x, self.y, height, self.height), 1)
-                pygame.draw.rect(self.surface, (0, 0, 0), (self.x, self.y, self.width, self.height), 1)
+                # pygame.draw.rect(self.surface, (255, 255, 255), (v_x, self.y, height, self.height), 1)
+                # pygame.draw.rect(self.surface, (0, 0, 0), (self.x, self.y, self.width, self.height), 1)
                 if component.x >= v_x and component.x+component.width <= v_x + height:
                     component.show()
                 elif component.x > v_x + height:
@@ -173,10 +186,14 @@ class Layout:
             self.HLayout()
 
 
-layout = Layout(window, 10, 10, spacing=10, visibility_area=(10, 900), margin=(10, 10, 10, 10), name="VLayout")
+scrollarea = ScrollArea(window, (20, 20, 200, 200))
+
+layout = Layout(scrollarea.get_surface(), 10, 10, spacing=10, visibility_area=(10, 500), margin=(10, 10, 10, 10), name="VLayout")
 
 for e in range(20):
-    layout.add_component(pygamelib.Frame(window, 'frame_1', (0, 0, random.randint(600, 800), 30), (45, 67, 44)), alignment=random.choice(('left', 'right')))
+    layout.add_component(pygamelib.Frame(scrollarea.get_surface(), 'frame_1', (0, 0, random.randint(600, 800), 30), (45, 67, 44)), alignment=random.choice(('left', 'right')))
+
+scrollarea.set_layout(layout)
 
 run = True
 while run:
@@ -190,5 +207,6 @@ while run:
                 layout.y += 10
 
     window.fill((145, 34, 110))
-    layout.show()
+    scrollarea.show()
     pygame.display.update()
+
